@@ -31,7 +31,7 @@ export function createB2BFlow({ shell, url, navigate, escape, feedback, errorBox
         <button class="button primary" type="submit">Consultar solicitações <span aria-hidden="true">→</span></button>
       </form>
       <details class="demo-accounts"><summary>Usar motorista de demonstração</summary><p>Dados fictícios, sem documentos reais.</p><div class="account-options">${DRIVERS.map((driver) => `<button class="account-option" data-driver="${driver.id}" type="button"><strong>${escape(driver.name)}</strong><span>Preencher identificação</span></button>`).join('')}</div></details>
-      <a class="subtle-link" href="${escape(link(participant, { fluxo: null }))}">Trocar tipo de registro</a><a class="subtle-link" href="${escape(url({ tela: 'qr' }))}">Voltar aos QRs de demonstração</a><p class="local-note">Consultar o QR não registra chegada, coleta ou pontos.</p>`);
+      <a class="subtle-link" href="${escape(link(participant, { fluxo: null }))}">Trocar tipo de registro</a><p class="local-note">Abrir o link do aplicativo não registra chegada, coleta ou pontos.</p>`);
     document.querySelectorAll('[data-driver]').forEach((button) => button.addEventListener('click', () => {
       const driver = DRIVERS.find((person) => person.id === button.dataset.driver);
       document.querySelector('#cpf').value = driver.cpf; document.querySelector('#cnh').value = driver.cnh;

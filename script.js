@@ -52,7 +52,7 @@ function brand() {
 function shell(content, operator, extraClass = '') {
   app.innerHTML = `
     <header class="site-header">
-      <a class="word-link back-link" href="${escape(url())}"><span aria-hidden="true">←</span> Início</a>
+      <span class="header-spacer" aria-hidden="true"></span>
       <span class="demo-badge"><span aria-hidden="true"></span> Demonstração</span>
       ${operator ? '<button class="word-link" id="logout" type="button">Sair <span aria-hidden="true">↗</span></button>' : '<span class="header-spacer"></span>'}
     </header>
@@ -76,18 +76,21 @@ function feedback(message, id = 'feedback') {
 
 function errorBox() { return '<p id="feedback" class="notice error" role="alert" tabindex="-1" hidden></p>'; }
 
+function missingParticipant(operator) {
+  shell(`<section class="card error-card"><span class="eyebrow">RECEBIMENTO DE ÓLEO</span><h1 tabindex="-1">Abra pelo<br>aplicativo.</h1><p class="intro">O QR Code exibido no mobile abre este formulário com o participante já identificado.</p><div class="notice soft">Use o link aberto pela leitura do QR no aplicativo B2B ou B2C para registrar o recebimento da pessoa ou empresa correta.</div>${operator ? `<a class="button primary" href="${escape(url({ tela: 'historico', fluxo: 'pev' }))}">Consultar histórico local <span aria-hidden="true">→</span></a>` : `<a class="subtle-link" href="${escape(url({ modo: 'api', fluxo: 'pev' }))}">Acessar minha conta existente</a>`}</section>`, operator);
+}
+
 function flowSelection(participant, operator) {
-  const destination = (flow) => participant ? url({ participante: participant.id, fluxo: flow }) : url({ tela: 'qr', fluxo: flow });
-  const driverAllowed = !participant || participant.type === 'B2B';
+  const destination = (flow) => url({ participante: participant.id, fluxo: flow });
+  const driverAllowed = participant.type === 'B2B';
   shell(`<section class="card flow-card">
     <span class="eyebrow">RECEBIMENTO DE ÓLEO</span><h1 tabindex="-1">Como deseja<br>registrar?</h1>
     <p class="intro">Escolha o fluxo de acordo com quem está recebendo o óleo.</p>
-    ${participant ? `<div class="qr-context"><img src="./assets/qr-icon.svg" alt=""><span>Participante identificado<strong>${escape(participant.name)}</strong></span><span class="tag">${participant.type}</span></div>` : ''}
+    <div class="qr-context"><img src="./assets/lock.svg" alt=""><span>Participante identificado<strong>${escape(participant.name)}</strong></span><span class="tag">${participant.type}</span></div>
     <div class="flow-options">
       <a class="flow-option" href="${escape(destination('pev'))}"><span class="flow-icon" aria-hidden="true">01</span><span class="flow-option-copy"><strong>Entrega em PEV</strong><span>Para B2B ou B2C que entrega óleo a um ponto de recebimento. O responsável informa apenas os litros recebidos.</span><span class="flow-caption">Login do responsável · quantidade de óleo</span></span><span class="flow-arrow" aria-hidden="true">→</span></a>
       ${driverAllowed ? `<a class="flow-option" href="${escape(destination('motorista'))}"><span class="flow-icon" aria-hidden="true">02</span><span class="flow-option-copy"><strong>Coleta com motorista</strong><span>Para a coleta de uma empresa operadora, como a Óleo Amigo, no estabelecimento B2B.</span><span class="flow-caption">CPF e CNH · solicitação e coleta</span></span><span class="flow-arrow" aria-hidden="true">→</span></a>` : '<div class="flow-option unavailable" aria-disabled="true"><span class="flow-icon" aria-hidden="true">02</span><span class="flow-option-copy"><strong>Coleta com motorista</strong><span>Este fluxo utiliza o QR de um estabelecimento B2B. Para este cidadão, use a entrega em PEV.</span></span></div>'}
     </div><p class="local-note">A escolha do fluxo não registra recebimento. A confirmação acontece no formulário.</p>
-    <a class="subtle-link" href="${escape(url({ tela: 'qr', participante: participant?.id, fluxo: null }))}">Ver QRs de demonstração</a>
   </section>`, operator);
 }
 
@@ -101,8 +104,8 @@ function login() {
     <span class="eyebrow">RECEBIMENTO DE ÓLEO</span>
     <h1 tabindex="-1">Entre para confirmar<br>o recebimento.</h1>
     <p class="intro">Acesse com a conta responsável por um PEV aprovado para registrar o óleo recebido.</p>
-    <a class="subtle-link" href="${escape(url({ modo: 'api', fluxo: 'pev' }))}">Usar conta existente na API</a>
-    ${participant ? `<div class="qr-context"><img src="./assets/qr-icon.svg" alt=""><span>QR identificado<strong>${escape(participant.name)}</strong></span><span class="tag">${participant.type}</span></div>` : ''}
+    <a class="subtle-link" href="${escape(url({ modo: 'api', fluxo: 'pev', participante: participant?.id }))}">Usar conta existente na API</a>
+    ${participant ? `<div class="qr-context"><img src="./assets/lock.svg" alt=""><span>Participante identificado<strong>${escape(participant.name)}</strong></span><span class="tag">${participant.type}</span></div>` : ''}
     <form id="login-form">
       <div class="field"><label for="email">E-mail</label><div class="input-icon"><img src="./assets/mail.svg" alt=""><input id="email" name="email" type="email" placeholder="Seu e-mail" autocomplete="username" required></div></div>
       <div class="field"><label for="password">Senha</label><div class="input-icon"><img src="./assets/lock.svg" alt=""><input id="password" name="password" type="password" placeholder="Sua senha" autocomplete="current-password" required><button id="password-toggle" type="button" class="password-toggle" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div></div>
@@ -110,7 +113,6 @@ function login() {
       <button class="button primary" type="submit">Continuar <span aria-hidden="true">→</span></button>
     </form>
     <details class="demo-accounts"><summary>Usar uma conta de demonstração</summary><p>Escolha um responsável com PEV aprovado.</p><div class="account-options">${OPERATORS.map((operator) => `<button class="account-option" data-account="${operator.id}" type="button"><strong>${operator.pevName}</strong><span>${operator.name}</span></button>`).join('')}</div><p>Testar um acesso bloqueado:</p><div class="access-test-options">${ACCESS_TEST_ACCOUNTS.map((account) => `<button class="word-link" data-account="${account.id}" type="button">${account.name}</button>`).join('')}</div><p class="credentials">Senha de teste: <code>${DEMO_PASSWORD}</code></p></details>
-    <a class="subtle-link" href="${escape(url({ tela: 'qr' }))}">Ver QRs de demonstração <span aria-hidden="true">↗</span></a>
     ${switchFlow(participant)}<p class="local-note">Acesso simulado para apresentação. Use apenas as contas de teste.</p>
   </section>`, null, 'login-layout');
   if (sessionNotice) { feedback(sessionNotice); sessionNotice = ''; }
@@ -135,7 +137,7 @@ function login() {
     catch (error) { feedback(error.message); return; }
     try {
       sessionStorage.setItem(SESSION_KEY, operator.id);
-      navigate({ participante: participant?.id, tela: participant ? undefined : 'qr', fluxo: 'pev' });
+      navigate({ participante: participant?.id, fluxo: 'pev' });
     } catch { feedback('O navegador está impedindo o armazenamento da sessão. Libere o armazenamento para continuar.'); }
   });
 }
@@ -145,34 +147,7 @@ function operatorLine(operator) {
 }
 
 function tabs(active) {
-  return `<nav class="section-nav" aria-label="Navegação do formulário"><a ${active === 'qr' ? 'aria-current="page"' : ''} href="${escape(url({ tela: 'qr' }))}">QRs de demonstração</a><a ${active === 'historico' ? 'aria-current="page"' : ''} href="${escape(url({ tela: 'historico', fluxo: 'pev' }))}">Histórico local</a></nav>`;
-}
-
-function qrPage(operator) {
-  const participant = participantNow() || PARTICIPANTS[0];
-  const link = url({ participante: participant.id, fluxo: null });
-  const formLink = url({ participante: participant.id });
-  shell(`<section class="card qr-card">
-    <span class="eyebrow">QR DO PARTICIPANTE</span><h1 tabindex="-1">Uma conexão.<br>Um novo destino.</h1>
-    <p class="intro">Na apresentação, este QR representa o código exibido no aplicativo.</p>
-    <div class="participant-options" role="group" aria-label="Participante de demonstração">${PARTICIPANTS.map((person) => `<a class="participant-option ${person.id === participant.id ? 'selected' : ''}" ${person.id === participant.id ? 'aria-current="true"' : ''} href="${escape(url({ tela: 'qr', participante: person.id }))}">${person.type === 'B2B' ? 'Empresa · B2B' : 'Cidadão · B2C'}</a>`).join('')}</div>
-    <div class="qr-code" id="qr-code" role="img" aria-label="QR Code de ${escape(participant.name)}"></div>
-    <h2 class="qr-person">${escape(participant.name)}</h2><p class="muted qr-id">${participant.id} <span aria-hidden="true">·</span> ${participant.type}</p>
-    <div class="notice soft">O QR identifica o participante. Depois da leitura, escolha entrega em PEV ou coleta com motorista, conforme a operação.</div>
-    <a class="button primary" href="${escape(formLink)}">Abrir formulário <span aria-hidden="true">→</span></a>
-    <button class="word-link copy-link" id="copy-link" type="button">Copiar link do QR Code</button><p class="copy-status" id="copy-status" role="status"></p>
-    <p class="local-note">Para escanear em outro celular, publique o site em HTTPS. Os registros ficam no navegador de quem confirma.</p>
-    ${operator ? operatorLine(operator) + tabs('qr') : `<a class="subtle-link" href="${escape(url())}">Acessar como responsável</a>`}
-  </section>`, operator);
-  if (typeof window.qrcode === 'function') {
-    const code = window.qrcode(0, 'M'); code.addData(link); code.make();
-    document.querySelector('#qr-code').innerHTML = code.createSvgTag({ cellSize: 5, margin: 20, scalable: true });
-  } else { document.querySelector('#qr-code').textContent = 'Não foi possível gerar o QR. Use o link abaixo.'; }
-  document.querySelector('#copy-link').addEventListener('click', async () => {
-    const status = document.querySelector('#copy-status');
-    try { await navigator.clipboard.writeText(link); status.textContent = 'Link copiado.'; }
-    catch { status.textContent = `Copie este link: ${link}`; }
-  });
+  return `<nav class="section-nav" aria-label="Navegação do formulário"><a ${active === 'historico' ? 'aria-current="page"' : ''} href="${escape(url({ tela: 'historico', fluxo: 'pev' }))}">Histórico local</a></nav>`;
 }
 
 function getDraft(participant, operator) {
@@ -276,14 +251,14 @@ function historyPage(operator) {
       const person = PARTICIPANTS.find((participant) => participant.id === row.participantId);
       return `<li><div><span class="tag">${person.type} · PEV</span><h2>${escape(person.name)}</h2><p>${dateFormat.format(new Date(row.createdAt))}</p></div><div class="history-amount"><strong>${liters(row.liters)}</strong><a href="${escape(url({ tela: 'comprovante', id: row.id, fluxo: 'pev' }))}">Comprovante <span aria-hidden="true">↗</span></a></div></li>`;
     }).join('')}</ul>` : '<div class="empty-state"><span aria-hidden="true">↗</span><h2>O primeiro passo começa aqui.</h2><p>Quando você confirmar um recebimento, ele aparecerá neste histórico.</p></div>'}
-    <a class="button primary" href="${escape(url({ tela: 'qr' }))}">Registrar recebimento <span aria-hidden="true">→</span></a>
+    <p class="notice soft">Para registrar outro participante, abra o link vindo do aplicativo dele.</p>
     ${operatorLine(operator)}${tabs('historico')}
     <p class="local-note">Os dados não sincronizam com o aplicativo ou outros dispositivos.</p>
   </section>`, operator);
 }
 
 function invalid(message, operator) {
-  shell(`<section class="card error-card"><span class="eyebrow">NÃO FOI POSSÍVEL CONTINUAR</span><h1 tabindex="-1">Vamos tentar de novo?</h1><p class="intro">${escape(message)}</p><a class="button primary" href="${escape(url({ tela: 'qr' }))}">Ver QRs de demonstração <span aria-hidden="true">→</span></a></section>`, operator);
+  shell(`<section class="card error-card"><span class="eyebrow">NÃO FOI POSSÍVEL CONTINUAR</span><h1 tabindex="-1">Vamos tentar de novo?</h1><p class="intro">${escape(message)}</p><a class="button primary" href="${escape(url())}">Voltar ao início <span aria-hidden="true">→</span></a></section>`, operator);
 }
 
 function render() {
@@ -294,10 +269,10 @@ function render() {
     const participant = participantNow();
     const view = params().get('tela');
     const flow = params().get('fluxo');
-    if (params().has('participante') && !participant) { invalid('Este QR Code não corresponde a um participante de demonstração. Confira o link ou use um dos QRs disponíveis.', operator); return; }
-    if (view === 'qr') { qrPage(operator); return; }
+    if (params().has('participante') && !participant) { invalid('Não foi possível identificar o participante deste link. Abra novamente pelo aplicativo B2B ou B2C.', operator); return; }
+    if (!participant && !['historico', 'comprovante'].includes(view)) { missingParticipant(operator); return; }
     if (flow === 'motorista') {
-      if (!participant) { qrPage(operator); return; }
+      if (!participant) { missingParticipant(operator); return; }
       if (participant.type !== 'B2B') { flowSelection(participant, operator); return; }
       b2bFlow.render(participant); return;
     }
@@ -310,7 +285,7 @@ function render() {
       receipt(record, operator); return;
     }
     if (participant) collectionForm(participant, operator);
-    else qrPage(operator);
+    else missingParticipant(operator);
   } catch (error) { invalid(error.message || 'O navegador não disponibilizou o armazenamento necessário para a demonstração.', operator); }
 }
 
