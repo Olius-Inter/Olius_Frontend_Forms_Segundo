@@ -1,0 +1,12 @@
+{
+  "name": "olius-forms",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Demonstração dos formulários Olius em HTML, CSS e JavaScript puro.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/core.test.js tests/b2b.test.js tests/collection-api.test.js tests/pev-api-auth.test.js"
+  },
+  "engines": { "node": ">=20" }
+}
