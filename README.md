@@ -55,7 +55,7 @@ Em **Usar uma conta de demonstração**, os botões **Conta sem PEV**, **PEV pen
 
 O helper `requireApprovedPev()` em `pev-access.js` recebe os formatos de perfil e PEV próprio encontrados na API: status da conta no perfil e status do ponto em seu vínculo. PEV não é um valor literal no status da conta. Quando o ambiente AWS estiver disponível, esses dados devem vir de `GET /api/v1/users/me` e `GET /api/v1/pevs/me`, após autenticação real. Não usar uma lista pública de PEVs para decidir titularidade. O frontend controla a experiência, mas a API precisa revalidar autorização e titularidade na resolução do QR e em cada gravação. Esta versão ainda usa dados locais, sem consultar o banco.
 
-Os QRs fictícios da página de demonstração continuam identificando apenas o participante, independentemente do caminho que será escolhido depois.
+O Forms não gera, exibe ou oferece escolha de QR Code. O QR existe somente no mobile e abre o link do Forms com o identificador do participante. Abrir a raiz sem identificador mostra uma orientação para entrar pelo aplicativo; nenhum participante é escolhido automaticamente. Links antigos com tela=qr não exibem mais uma tela de QR.
 
 ## Apresentar coleta com motorista
 
@@ -130,7 +130,7 @@ Fontes: [API_Olius](https://github.com/Olius-Inter/API_Olius), revisão c75c750;
 
 ## Mobile e QR
 
-A imagem do QR do produto pertence ao aplicativo B2B/B2C. A página `/?tela=qr` apenas auxilia a apresentação, com participantes fictícios e o botão Abrir formulário.
+A imagem do QR pertence exclusivamente ao aplicativo B2B/B2C. O mobile abre o Forms já com o identificador do participante; não há geração de QR, cópia de link de QR ou seleção de participante dentro do Forms. Para apresentar localmente, abra diretamente `/?participante=b2b-001` ou `/?participante=b2c-001`, simulando o link recebido do mobile. O identificador é preservado ao escolher o fluxo e fazer login; nome e identidade não possuem edição.
 
 O token real já existe no perfil de `GET /api/v1/users/me`. O mobile precisa codificar um endereço HTTPS do Forms transportando esse token conforme a convenção combinada. Os links com participante=b2b-001 ou b2c-001 identificam somente as fixtures desta versão.
 
@@ -154,7 +154,7 @@ Para reiniciar a apresentação, exclua apenas as chaves olius.forms.* nas ferra
 - index.html: entrada; style.css: visual responsivo.
 - script.js/core.js: escolha de caminho, navegação e entrega simples em PEV para B2B/B2C.
 - b2b.js/b2b-core.js: telas, fixtures e regras da coleta da operadora com motorista.
-- assets/: elementos oficiais do Figma, fonte local e gerador QR.
+- assets/: elementos oficiais do Figma e fonte local.
 - tests/: regras e roteiro de navegador; server.js: servidor de arquivos opcional.
 
 Para o roteiro opcional de navegador, com o servidor já iniciado:
@@ -170,6 +170,6 @@ No Windows usa Edge headless; nos demais sistemas requer `npx playwright install
 
 Referência principal: [login mobile B2B V2](https://www.figma.com/design/yBZd5MfeNRhxzkBHXEJutl/Olius---Geral?node-id=379-725), com fundo claro/degradê amarelo, cartão branco, Inter e botão amarelo. O [botão QR](https://www.figma.com/design/yBZd5MfeNRhxzkBHXEJutl/Olius---Geral?node-id=2839-2737) orienta o fluxo. Os formulários são adaptações, sem menu administrativo.
 
-Recursos locais, sem URLs temporárias em execução. Fonte Inter sob SIL OFL (assets/fonts/Inter-OFL.txt); qrcode-generator 1.4.4, de Kazuhiko Arase, sob MIT, com atribuição no arquivo.
+Recursos locais, sem URLs temporárias em execução. Fonte Inter sob SIL OFL (assets/fonts/Inter-OFL.txt). A biblioteca de geração de QR foi removida do Forms.
 
 A pasta pode ser a raiz de um repositório independente. Não foi criado repositório remoto nem feita publicação. A hospedagem é estática, sem build, com a raiz como pasta de publicação.

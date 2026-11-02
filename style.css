@@ -40,9 +40,8 @@ h2 { font-size: 17px; line-height: 1.4; }
 .site-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1248px; padding: 30px 32px; margin: auto; }
 .word-link { border: 0; background: transparent; padding: 6px 0; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 9px; }
 .word-link:hover, .subtle-link:hover { text-decoration: underline; }
-.back-link, .header-spacer, #logout { width: 72px; }
+.header-spacer, #logout { width: 72px; }
 #logout { justify-content: flex-end; }
-.back-link span { font-size: 19px; }
 .demo-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #695b28; border: 1px solid #e9dfb9; background: #fffdf3; padding: 7px 11px; border-radius: 30px; }
 .demo-badge > span { width: 5px; height: 5px; background: #b58a00; border-radius: 50%; }
 main { max-width: 636px; margin: 0 auto; padding: 12px 20px 0; }
@@ -137,17 +136,6 @@ input::placeholder { color: #86847d; }
 .section-nav { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 25px; row-gap: 13px; padding-top: 23px; }
 .section-nav a { font-size: 11px; color: #625b46; text-underline-offset: 4px; }
 .section-nav a[aria-current] { font-weight: 600; }
-.qr-card { text-align: center; }
-.participant-options { display: flex; border: 1px solid #e9e5d8; border-radius: 10px; padding: 4px; margin-top: 25px; background: #faf9f4; gap: 5px; }
-.participant-option { flex: 1; font-size: 12px; text-decoration: none; padding: 11px 8px; border-radius: 7px; color: #746b53; }
-.participant-option.selected { background: #fff; color: #5c480e; box-shadow: 0 1px 4px #0000000d; font-weight: 600; }
-.qr-code { margin: 25px auto 20px; width: min(100%, 230px); border: 1px solid #eee9d9; border-radius: 17px; padding: 7px; background: white; }
-.qr-code svg { display: block; width: 100%; height: auto; }
-.qr-person { font-size: 18px; }
-.qr-id { font-size: 11px; margin-top: 8px; }
-.copy-link { display: flex; margin: 14px auto 0; font-size: 12px; }
-.copy-status { font-size: 11px; line-height: 1.6; color: #466b43; overflow-wrap: anywhere; }
-.copy-status:not(:empty) { margin-top: 8px; }
 .receipt-card { text-align: center; }
 .success-icon { display: flex; width: 55px; height: 55px; align-items: center; justify-content: center; background: #edf6e9; color: #4e7941; font-size: 25px; border-radius: 50%; margin: 0 auto 22px; }
 .receipt-volume { font-size: 60px; font-weight: 600; letter-spacing: -2px; padding: 27px 0; color: #66531c; }
