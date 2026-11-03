@@ -1,4 +1,5 @@
 import { requireApprovedPev } from './pev-access.js';
+import { deliveryDTO } from './delivery-api.js';
 
 export const API_BASE_URL = 'https://tvkgo0evuj.execute-api.us-east-1.amazonaws.com';
 
@@ -37,6 +38,13 @@ export function createPevApiAuth({ baseUrl = API_BASE_URL, fetchImpl = globalThi
         if (path === '/api/v1/pevs/me' && [403, 404].includes(response.status)) throw new PevApiError('Esta conta não possui um PEV disponível para registrar recebimentos.', 'PEV_REQUIRED');
         if (response.status === 403) throw new PevApiError('A API recusou o acesso. Confira a permissão da conta e a liberação deste site.', 'FORBIDDEN');
         if (response.status === 429) throw new PevApiError('Muitas tentativas. Aguarde antes de entrar novamente.', 'RATE_LIMITED');
+        if ([400, 404, 409, 422].includes(response.status)) {
+          const messages = { 400: 'A API recusou os dados enviados. Confira o participante e a quantidade.',
+            404: 'Participante ou registro não encontrado. A resolução atual atende cidadãos B2C.',
+            409: 'A entrega está em conflito ou atingiu uma regra de recebimento. Preserve os dados para verificar o resultado.',
+            422: 'As regras do serviço não permitem registrar esta entrega.' };
+          throw new PevApiError(messages[response.status], `HTTP_${response.status}`);
+        }
         throw new PevApiError('O serviço não conseguiu concluir o acesso. Tente novamente mais tarde.', 'SERVICE_UNAVAILABLE');
       }
       if (response.status === 204) return null;
@@ -82,5 +90,24 @@ export function createPevApiAuth({ baseUrl = API_BASE_URL, fetchImpl = globalThi
     },
     logout,
     currentAccount: () => account,
+    async resolveParticipant(qrToken) {
+      if (!account) throw new PevApiError('Entre com o responsável pelo PEV.', 'SESSION_REQUIRED');
+      if (!/^[A-Za-z0-9_-]{43}$/.test(qrToken)) throw new Error('O link precisa conter o qrToken fornecido pelo mobile.');
+      const participant = await request('/api/v1/qr/resolutions', { method: 'POST', authenticated: true, body: { qrToken } });
+      if (!participant?.id || typeof participant.name !== 'string' || !participant.name.trim()) throw new Error('A API não identificou o participante.');
+      return Object.freeze({ id: participant.id, name: participant.name });
+    },
+    async confirmDelivery(input, citizenId) {
+      if (!account) throw new PevApiError('Entre novamente com o responsável pelo PEV.', 'SESSION_REQUIRED');
+      const body = deliveryDTO(input);
+      const result = await request(`/api/v1/pevs/${encodeURIComponent(account.pevId)}/deliveries`, {
+        method: 'POST', authenticated: true, body,
+      });
+      if (!result?.id || result.pevId !== account.pevId || result.citizenId !== citizenId ||
+          Number(result.oilVolumeLiters) !== body.oilVolumeLiters || !Number.isFinite(Date.parse(result.createdAt))) {
+        throw new Error('A API respondeu sem o comprovante esperado. Preserve os dados e reenvie a mesma operação para verificar, sem criar outra entrega.');
+      }
+      return result;
+    },
   };
 }
