@@ -61,7 +61,7 @@ const output = resolve(root, 'artifacts');
       if (item === 'approved') {
         await page.getByRole('heading', { name: /Seu PEV/ }).waitFor();
         assert.equal(await page.getByText('Conta existente de teste', { exact: true }).count(), 1);
-        assert.equal(await page.getByText(/registro de entregas nesta conexão ainda não foi ativado/).count(), 1);
+        assert.equal(await page.getByText(/Abra o link gerado pelo mobile/).count(), 1);
         await page.evaluate(() => document.fonts.ready);
         await page.screenshot({ path: resolve(output, 'existing-pev-approved-mobile.png'), fullPage: true });
         const scan = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();

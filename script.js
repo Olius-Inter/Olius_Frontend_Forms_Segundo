@@ -3,7 +3,8 @@ import {
   readDeliveries, dailyCount, confirmPevDelivery, isPevRecord, requireDemoPev, authenticatePevDemo,
 } from './core.js';
 import { createB2BFlow } from './b2b.js';
-import { createExistingPevAccount } from './pev-existing-account.js';
+import { createApiFlow } from './api-flow.js';
+import { usesLiveApi } from './mobile-link.js';
 
 const app = document.querySelector('#app');
 const SESSION_KEY = 'olius.forms.session.v1';
@@ -15,7 +16,7 @@ const participantNow = () => PARTICIPANTS.find((person) => person.id === params(
 const draftKey = (participant, operator) => `olius.forms.draft.${participant.type === 'B2B' ? 'pev.' : ''}${participant.id}.${operator.id}`;
 const liters = (value) => `${numberFormat.format(value)} L`;
 const b2bFlow = createB2BFlow({ shell, url, navigate, escape, feedback, errorBox, dateFormat, numberFormat, rerender: render });
-const existingPevAccount = createExistingPevAccount({ shell, escape, errorBox, feedback, isActive: () => params().get('modo') === 'api' });
+const apiFlow = createApiFlow({ shell, escape, errorBox, feedback, isActive: () => usesLiveApi() });
 let sessionNotice = '';
 
 function session() {
@@ -53,7 +54,6 @@ function shell(content, operator, extraClass = '') {
   app.innerHTML = `
     <header class="site-header">
       <span class="header-spacer" aria-hidden="true"></span>
-      <span class="demo-badge"><span aria-hidden="true"></span> Demonstração</span>
       ${operator ? '<button class="word-link" id="logout" type="button">Sair <span aria-hidden="true">↗</span></button>' : '<span class="header-spacer"></span>'}
     </header>
     <main id="main" class="${extraClass}">
@@ -264,7 +264,8 @@ function invalid(message, operator) {
 function render() {
   let operator;
   try {
-    if (params().get('modo') === 'api') { existingPevAccount.render(); return; }
+    if (apiFlow.hasPending()) { apiFlow.render(); return; }
+    if (usesLiveApi()) { apiFlow.render(); return; }
     operator = session();
     const participant = participantNow();
     const view = params().get('tela');

@@ -42,8 +42,6 @@ h2 { font-size: 17px; line-height: 1.4; }
 .word-link:hover, .subtle-link:hover { text-decoration: underline; }
 .header-spacer, #logout { width: 72px; }
 #logout { justify-content: flex-end; }
-.demo-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #695b28; border: 1px solid #e9dfb9; background: #fffdf3; padding: 7px 11px; border-radius: 30px; }
-.demo-badge > span { width: 5px; height: 5px; background: #b58a00; border-radius: 50%; }
 main { max-width: 636px; margin: 0 auto; padding: 12px 20px 0; }
 .brand { display: flex; justify-content: center; align-items: flex-end; gap: 10px; width: max-content; margin: 0 auto 28px; text-decoration: none; }
 .brand img { width: 49px; height: 68.626px; }
@@ -230,5 +228,16 @@ textarea.standard-input { resize: vertical; min-height: 100px; }
   .volume-grid { gap: 10px; }
   .volume-grid .field label { font-size: 10px; line-height: 1.5; }
 }
+
+.api-fields { border: 0; padding: 0; margin: 24px 0; min-width: 0; }
+.api-fields > legend { padding: 0 0 18px; font-size: 14px; font-weight: 600; }
+.api-form .field label { display: block; }
+.api-form .field input, .api-form .field select, .api-form .field textarea {
+  display: block; width: 100%; min-height: 50px; padding: 13px 15px; margin: 0;
+  border: 1px solid var(--border); border-radius: 12px; background: #fff;
+  color: inherit; font: inherit; font-size: 14px; box-sizing: border-box;
+}
+.api-form .field textarea { min-height: 100px; resize: vertical; }
+.api-form .field input[readonly], .api-form fieldset:disabled { opacity: .75; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }

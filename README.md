@@ -6,21 +6,39 @@ A escolha é feita pelo tipo de operação, não apenas pelo tipo de participant
 
 ## Estado desta versão
 
-O fluxo padrão é uma **demonstração local**, com dados fictícios e persistência no navegador. O acesso a uma conta existente na API está disponível em um painel separado, para autenticação e validação de PEV; os formulários de entrega continuam locais. O servidor local apenas serve arquivos. Pontos, ranking e saldo reais não são atualizados nesta versão. A rota atual de entregas da API aceita apenas cidadão beneficiário: ela não é utilizada para tentar registrar B2B em PEV. A integração desse novo caso exige suporte correspondente na API e no modelo de dados.
+Endereço público do Forms: https://olius-frontend-forms-segundo.onrender.com. Entrada do modo API: https://olius-frontend-forms-segundo.onrender.com/?modo=api.
 
-O módulo `collection-api.js` deixa preparada e testada uma chamada isolada de confirmação B2B, com um DTO que seleciona somente os campos dessa operação. Ele não é ativado pela demonstração e não recebe seus dados fictícios automaticamente. Para utilizá-lo, o chamador deve fornecer o endereço da API, o ID de um pedido real e seu payload operacional. O módulo faz um único POST, não consulta módulos administrativos, não inventa campos e não repete envios automaticamente após falha de rede. Falta de resposta não é tratada como certeza de que a operação não foi salva.
+Links com `qrToken` real ou `modo=api` abrem a integração com a API. Estão conectados o login e a validação de PEV, a identificação do cidadão e o registro de entrega B2C; no motorista, contexto, paginação, chegada explícita, atualização do aceite e confirmação da coleta. Só a resposta do servidor libera um comprovante real. Pontos, ranking e saldo são responsabilidade das rotinas da API, sem cálculo ou atualização local pelo Forms.
 
-O endereço da API já foi informado. Para validar o acesso real, ainda são necessários CORS liberado e uma conta existente de teste com PEV aprovado. Para registrar entregas reais, faltam a integração dessas operações e o alinhamento do link do QR com o mobile. Não inserir documentos ou credenciais reais na demo.
+Os links fictícios `?participante=b2b-001` e `?participante=b2c-001` continuam abrindo a demonstração local, identificada como tal. Fixtures, contas e registros da demonstração não são enviados à API. A entrega B2B em PEV, sem motorista, permanece somente na demonstração: o contrato atual de resolução e entrega atende cidadão beneficiário, e não foi reaproveitado incorretamente para empresas.
+
+O contrato foi conferido em API_Olius `origin/main` (`4bf8083`) em 03/11/2026. As alterações posteriores à revisão anterior não mudaram os DTOs operacionais. A API publicada respondeu 200 em `/api/v1/establishment-types`, mas recusou a origem `http://127.0.0.1:5186` com 403 `Invalid CORS request`. A gravação real ainda não pôde ser validada: é necessário liberar CORS e usar contas, tokens, motorista e solicitações de teste válidos. Nenhuma gravação foi feita na AWS durante esta implementação.
 
 ## Entrar com uma conta existente na API
 
 O endereço da AWS foi informado e o acesso real está disponível separadamente em `/?modo=api&fluxo=pev`, ou pelo link **Usar conta existente na API** no login da demonstração.
 
-O módulo `pev-api-auth.js` aponta para `https://tvkgo0evuj.execute-api.us-east-1.amazonaws.com`. Ele prepara CSRF, envia login com cookies, consulta `GET /api/v1/users/me` e `GET /api/v1/pevs/me` com Bearer e valida conta ativa/PEV próprio aprovado. Não cria contas nem altera o banco. Login incorreto, ausência de PEV, ponto pendente e falha de rede não são substituídos por sucesso local. O encerramento usa o logout da API; falha remota é informada.
+O módulo `pev-api-auth.js` aponta para `https://tvkgo0evuj.execute-api.us-east-1.amazonaws.com`. Ele prepara CSRF, envia login com cookies, consulta `GET /api/v1/users/me` e `GET /api/v1/pevs/me` com Bearer e valida conta ativa/PEV próprio aprovado. Não cria contas; a gravação de entrega ocorre somente na confirmação explícita. Login incorreto, ausência de PEV, ponto pendente e falha de rede não são substituídos por sucesso local. O encerramento usa o logout da API; falha remota é informada.
 
-Esta conexão implementa **autenticação e verificação do vínculo PEV**, não gravação real de entregas. A tela de sucesso deixa esse limite explícito. Não mistura a conta real com os registros fictícios da apresentação. Senha é removida do campo após a tentativa e o token é mantido somente em memória, sem localStorage/sessionStorage; recarregar pede novo login.
+Após entrar, o responsável identifica o participante do link e informa os litros recebidos. O nome é retornado por `/api/v1/qr/resolutions` e não tem campo editável. A confirmação envia somente idempotencyKey, qrToken, oilVolumeLiters e deliveryDate para o PEV vinculado à sessão. O servidor revalida autorização, titularidade e regras de entrega. Senha é removida do campo após a tentativa; dados de acesso, documentos e rascunhos reais ficam somente em memória, sem localStorage/sessionStorage.
 
-O CORS da API deve permitir a origem em que o Forms estiver hospedado e o uso de credenciais/cabeçalho CSRF. Para a prévia atual, a origem é `http://127.0.0.1:5186`. Se esse acesso ainda estiver bloqueado, o formulário exibirá um erro de conexão; não há proxy ou desativação da proteção do navegador. Nenhum domínio já autorizado foi informado para hospedagem alternativa. As credenciais reais devem ser digitadas apenas nessa tela, não nos botões da demonstração.
+O primeiro envio fixa a chave, a quantidade e a data. Se houver falha ou resposta incerta, a tela permite reenviar a mesma operação, sem repetição automática. No motorista, a solicitação continua sendo a chave da coleta. Campos ficam bloqueados durante a verificação e há proteção contra saída acidental; não recarregue nem feche a página até verificar o resultado. O PEV permite reautenticação com a mesma conta preservando o envio pendente. O aviso de saída do navegador não garante recuperação se a aba for fechada ou o processo encerrar.
+
+### Link enviado pelo mobile
+
+```text
+https://olius-frontend-forms-segundo.onrender.com/?qrToken=TOKEN_REAL_DO_PERFIL
+```
+
+Sem `fluxo`, o usuário escolhe PEV ou motorista. Acrescente `&fluxo=pev` ou `&fluxo=motorista` para abrir diretamente. `&tipo=b2b` sinaliza a pendência da entrega B2B/PEV, sem conceder autorização. O parâmetro `participante` também aceita o token de 43 caracteres por compatibilidade; UUID ou ID fictício sozinho não substitui o qrToken exigido pelo contrato atual. Não colocar CPF, CNH, e-mail ou senha no link. O Forms não gera nem escaneia QR; só recebe o link produzido pelo mobile.
+
+### Motorista
+
+O acesso real está em `/?modo=api&fluxo=motorista&qrToken=TOKEN_REAL_DO_ESTABELECIMENTO`. O motorista informa CPF/CNH, seleciona uma solicitação aprovada/agendada retornada pela API e registra a chegada. A tela consulta novamente o contexto para verificar o aceite realizado pelo estabelecimento no próprio mobile. Não há botão de simular aceite no modo real. Depois, envia volumes, condição, ocorrências, motivos do catálogo real e observação. O Forms não chama o endpoint de aceite em nome do estabelecimento.
+
+O endereço público é `https://olius-frontend-forms-segundo.onrender.com`. Em 03/11/2026, a API retornou 200 no CSRF para essa origem, com `Access-Control-Allow-Origin` correspondente e credenciais permitidas. Essa liberação não substitui a validação de login e gravação com dados de teste válidos.
+
+A origem exata deve constar em `OLIUS_ALLOWED_ORIGINS`, preservando as origens existentes. Para desenvolvimento local, usar `http://127.0.0.1:5186` ou, no `npm start` sem PORT, `http://127.0.0.1:5185`; a origem 5186 continuava bloqueada na verificação anterior. A configuração deve permitir GET/POST/OPTIONS, credenciais de login e os cabeçalhos Content-Type, Authorization e X-XSRF-TOKEN. Se o acesso estiver bloqueado, a tela informa o erro; não há proxy nem desativação de proteção. Credenciais reais devem ser digitadas somente no modo API.
 
 ## Executar
 
@@ -53,7 +71,7 @@ O login da demonstração confere e-mail/senha e só libera o formulário se a c
 
 Em **Usar uma conta de demonstração**, os botões **Conta sem PEV**, **PEV pendente** e **Conta inativa** permitem apresentar os bloqueios. Usam a mesma senha fictícia de teste e não criam sessão autorizada.
 
-O helper `requireApprovedPev()` em `pev-access.js` recebe os formatos de perfil e PEV próprio encontrados na API: status da conta no perfil e status do ponto em seu vínculo. PEV não é um valor literal no status da conta. Quando o ambiente AWS estiver disponível, esses dados devem vir de `GET /api/v1/users/me` e `GET /api/v1/pevs/me`, após autenticação real. Não usar uma lista pública de PEVs para decidir titularidade. O frontend controla a experiência, mas a API precisa revalidar autorização e titularidade na resolução do QR e em cada gravação. Esta versão ainda usa dados locais, sem consultar o banco.
+O helper `requireApprovedPev()` em `pev-access.js` recebe o status da conta e o status do ponto em seu vínculo. PEV não é um valor literal no status da conta. No modo API, os dados vêm de `GET /api/v1/users/me` e `GET /api/v1/pevs/me`, após autenticação real; na demonstração, vêm das fixtures locais. Não usar uma lista pública de PEVs para decidir titularidade. O frontend controla a experiência; a API revalida autorização e titularidade na resolução e na gravação.
 
 O Forms não gera, exibe ou oferece escolha de QR Code. O QR existe somente no mobile e abre o link do Forms com o identificador do participante. Abrir a raiz sem identificador mostra uma orientação para entrar pelo aplicativo; nenhum participante é escolhido automaticamente. Links antigos com tela=qr não exibem mais uma tela de QR.
 
@@ -103,7 +121,7 @@ O limite de duas entregas por participante/PEV/dia de São Paulo permanece como 
 
 ## Contratos conferidos
 
-Fontes: [API_Olius](https://github.com/Olius-Inter/API_Olius), revisão c75c750; [DB_Segundo](https://github.com/Olius-Inter/DB_Segundo), revisão 5a9ff74.
+Fontes: [API_Olius](https://github.com/Olius-Inter/API_Olius), revisão 4bf8083 (DTOs operacionais sem alteração desde c75c750); [DB_Segundo](https://github.com/Olius-Inter/DB_Segundo), revisão 5a9ff74.
 
 ### B2C
 
@@ -115,7 +133,7 @@ Fontes: [API_Olius](https://github.com/Olius-Inter/API_Olius), revisão c75c750;
 - `GET /api/v1/pevs/{pevId}/deliveries` e `GET /api/v1/pevs/{pevId}/deliveries/{deliveryId}`: histórico e comprovante.
 - `GET /api/v1/users/me/deliveries`: histórico do doador no mobile.
 
-`deliveryPayload()` em core.js produz o objeto da criação. Quantidade e data originais devem ser preservadas nos reenvios. O createdAt real é do servidor. Não há citizenId ou validatorId editáveis no formulário.
+`deliveryPayload()` em core.js produz o objeto da demonstração; `deliveryDTO()` em delivery-api.js produz o objeto do modo API. Quantidade e data originais são preservadas nos reenvios. O createdAt real é do servidor. Não há citizenId ou validatorId editáveis no formulário. As rotas GET de histórico estão documentadas como contrato disponível; a nova tela conectada mostra o comprovante retornado pelo POST e não implementa uma listagem remota.
 
 `confirmPevDelivery()` permite o recebimento local de B2B ou B2C no PEV. Para cidadãos, reutiliza a regra existente; para empresas, usa um registro local marcado com `flow: PEV`, sem chamar a API B2C ou as rotinas de motorista. `deliveryPayload()` continua rejeitando empresa, para evitar uma integração incorreta com a rota exclusiva de cidadão. A futura integração B2B/PEV deve identificar o estabelecimento doador, o responsável autenticado pelo PEV e a quantidade, com idempotência e persistência próprias ao modelo aprovado.
 
@@ -126,7 +144,7 @@ Fontes: [API_Olius](https://github.com/Olius-Inter/API_Olius), revisão c75c750;
 - `POST /api/v1/collection-requests/{id}/service-acceptance`: ação do estabelecimento no app, com sua própria sessão.
 - `POST /api/v1/operations/b2b/requests/{id}/collection`: access (cpf/cnh/qrToken), collectedVolumeLiters, presentedVolumeLiters, oilCondition, hasCompromisingOccurrence, failureReasonCodes e observation.
 
-`collectionPayload()` em b2b-core.js produz o objeto de confirmação. A solicitação é a chave de idempotência. Data, resultado, pontos, recorrência e certificados reais são determinados pela API e pelas rotinas oficiais. A demo só representa o fluxo e os fatos. Motivos locais servem às fixtures; a integração deve carregar o catálogo do contexto real.
+`collectionPayload()` em b2b-core.js produz o objeto da demonstração; `collectionDTO()` em collection-api.js produz o objeto do modo API. A solicitação é a chave de idempotência. Data, resultado, pontos, recorrência e certificados reais são determinados pela API e pelas rotinas oficiais. A demo só representa o fluxo e os fatos. O modo API carrega motivos e solicitações do contexto real.
 
 ## Mobile e QR
 
@@ -154,6 +172,10 @@ Para reiniciar a apresentação, exclua apenas as chaves olius.forms.* nas ferra
 - index.html: entrada; style.css: visual responsivo.
 - script.js/core.js: escolha de caminho, navegação e entrega simples em PEV para B2B/B2C.
 - b2b.js/b2b-core.js: telas, fixtures e regras da coleta da operadora com motorista.
+- api-flow.js: telas conectadas à API, separadas da demonstração.
+- pev-api-auth.js/delivery-api.js: login, autorização PEV, identificação e entrega B2C.
+- driver-api.js/collection-api.js: contexto, chegada e coleta B2B com dados reais.
+- mobile-link.js: leitura do token recebido do mobile, sem gerar QR.
 - assets/: elementos oficiais do Figma e fonte local.
 - tests/: regras e roteiro de navegador; server.js: servidor de arquivos opcional.
 
@@ -162,9 +184,11 @@ Para o roteiro opcional de navegador, com o servidor já iniciado:
 ```sh
 npm install --no-save playwright @axe-core/playwright
 node tests/browser.cjs
+node tests/pev-existing-account.browser.cjs
+node tests/live-api.browser.cjs
 ```
 
-No Windows usa Edge headless; nos demais sistemas requer `npx playwright install chromium`. OLIUS_TEST_URL seleciona outro endereço e OLIUS_TEST_DEPENDENCIES reutiliza dependências de outro diretório. Capturas e relatório ficam em artifacts/, ignorado pelo Git. Esses testes não verificam um ambiente real da API.
+No Windows usa Edge headless; nos demais sistemas requer `npx playwright install chromium`. OLIUS_TEST_URL seleciona outro endereço para os dois primeiros roteiros; OLIUS_TEST_DEPENDENCIES reutiliza dependências de outro diretório. Os testes de conta existente e integração iniciam seus servidores nas portas 5196 e 5197. Capturas e relatórios ficam em artifacts/, ignorado pelo Git. As integrações são exercitadas com respostas simuladas, incluindo falha após envio, reautenticação com outra conta, reenvio idêntico, ausência de aceite, conflito, validação de perfil e acessibilidade; não comprovam gravação na AWS.
 
 ## Visual e publicação
 
@@ -172,4 +196,4 @@ Referência principal: [login mobile B2B V2](https://www.figma.com/design/yBZd5M
 
 Recursos locais, sem URLs temporárias em execução. Fonte Inter sob SIL OFL (assets/fonts/Inter-OFL.txt). A biblioteca de geração de QR foi removida do Forms.
 
-A pasta pode ser a raiz de um repositório independente. Não foi criado repositório remoto nem feita publicação. A hospedagem é estática, sem build, com a raiz como pasta de publicação.
+O projeto permanece no repositório independente `Olius_Frontend_Forms_Segundo`. A hospedagem é estática, sem build, com a raiz como pasta de publicação. O servidor local é opcional e não faz proxy da API. Não há importação de código, rotas ou dependências do portal ADM.

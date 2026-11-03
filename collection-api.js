@@ -55,7 +55,7 @@ export function createCollectionApi({ baseUrl, fetchImpl = globalThis.fetch }) {
       try {
         response = await fetchImpl(target.href, {
           method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          credentials: 'omit', cache: 'no-store', redirect: 'error', body: JSON.stringify(dto), signal,
+          credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer', body: JSON.stringify(dto), signal,
         });
       } catch (error) {
         if (signal?.aborted || error?.name === 'AbortError') throw error;
