@@ -186,7 +186,7 @@ export function createApiFlow({ shell, escape, errorBox, feedback, isActive }) {
       show(`<span class="eyebrow">CONFIRMADO PELA API</span><h1 tabindex="-1">Coleta<br>registrada.</h1>${identity(context.establishmentName, 'B2B')}
         <dl class="receipt-details"><div><dt>Quantidade</dt><dd>${escape(collection.collectedVolumeLiters)} L</dd></div>
         <div><dt>Data</dt><dd>${escape(date(collection.collectionDate))}</dd></div><div><dt>Comprovante</dt><dd>${escape(collection.id)}</dd></div>
-        <div><dt>Resultado</dt><dd>${escape(collection.result)}</dd></div><div><dt>Pontos</dt><dd>${escape(collection.pointsEarned ?? 'Consulte no app')}</dd></div></dl>
+        <div><dt>Resultado</dt><dd>${collection.result === 'SUCCESSFUL' ? 'Bem-sucedida' : 'Sem sucesso'}</dd></div><div><dt>Pontos</dt><dd>${escape(collection.pointsEarned ?? 'Consulte no app')}</dd></div></dl>
         ${errorBox()}<button class="button primary" id="finish-driver">Encerrar operação</button>`);
       document.querySelector('#finish-driver').addEventListener('click', () => {
         access = null; context = null; selectedId = null; receipt = null; pending = null;

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { API_BASE_URL, createPevApiAuth } from '../pev-api-auth.js';
 
-function apiMock({ loginStatus = 200, user = {}, pev = {}, pevStatus = 200, logoutFails = false } = {}) {
+function apiMock({ loginStatus = 200, user = {}, pev = {}, pevStatus = 200, logoutFails = false, logoutStatus = 204 } = {}) {
   const calls = [];
   const reply = (body, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
   const fetchImpl = async (url, options) => {
@@ -12,7 +12,9 @@ function apiMock({ loginStatus = 200, user = {}, pev = {}, pevStatus = 200, logo
       case '/api/v1/auth/web/login': return reply({ accessToken: 'access-test', tokenType: 'Bearer' }, loginStatus);
       case '/api/v1/users/me': return reply({ id: 'user-1', name: 'Responsável existente', status: 'ACTIVE', userType: 'CITIZENS', cpf: 'private-test', qrToken: 'private-test', ...user });
       case '/api/v1/pevs/me': return reply({ id: 'pev-1', status: 'APPROVED', address: { city: 'São Paulo' }, ...pev }, pevStatus);
-      case '/api/v1/auth/web/logout': if (logoutFails) throw new TypeError('offline'); return reply(null, 204);
+      case '/api/v1/auth/web/logout':
+        if (logoutFails) throw new TypeError('offline');
+        return { ok: true, status: logoutStatus, json: async () => { throw new Error('Logout não retorna JSON.'); } };
       default: throw new Error('Unexpected route');
     }
   };
@@ -69,4 +71,18 @@ test('encerrar apaga a conta em memória mesmo se a revogação remota falhar', 
   const mock = apiMock({ logoutFails: true }); const api = createPevApiAuth({ fetchImpl: mock.fetchImpl });
   await api.login('existing@example.test', 'test');
   await assert.rejects(() => api.logout()); assert.equal(api.currentAccount(), null);
+});
+
+test('logout aceita 200 sem corpo do Swagger e 204 idempotente', async () => {
+  for (const logoutStatus of [200, 204]) {
+    const mock = apiMock({ logoutStatus });
+    const api = createPevApiAuth({ fetchImpl: mock.fetchImpl });
+    await api.login('existing@example.test', 'test');
+    await api.logout();
+    assert.equal(api.currentAccount(), null);
+    const call = mock.calls.at(-1);
+    assert.equal(call.path, '/api/v1/auth/web/logout');
+    assert.equal(call.options.credentials, 'include');
+    assert.equal(call.options.headers['X-XSRF-TOKEN'], 'csrf-test');
+  }
 });

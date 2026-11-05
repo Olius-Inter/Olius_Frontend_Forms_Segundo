@@ -71,7 +71,7 @@ const citizenId = '30000000-0000-4000-8000-000000000001';
         assert.equal(arrived && accepted, true);
         if (++collections === 1) status = 409;
         body = { collection: { id, requestId: id, establishmentId: 'company-test', driverId: 'driver-test', collectedVolumeLiters: 10,
-          collectionDate: '2026-01-01T12:02:00Z', result: 'SUCCESS', pointsEarned: 20 } };
+          collectionDate: '2026-01-01T12:02:00Z', result: 'SUCCESSFUL', pointsEarned: 20 } };
       } else throw new Error(`Endpoint inesperado: ${path}`);
       await route.fulfill({ status, headers, ...(status === 204 ? {} : { contentType: 'application/json', body: JSON.stringify(body) }) });
     });
@@ -136,6 +136,7 @@ const citizenId = '30000000-0000-4000-8000-000000000001';
     assert.equal(await page.getByLabel('Volume coletado (litros)').isDisabled(), true);
     await page.getByRole('button', { name: 'Reenviar mesma coleta' }).click();
     await page.getByRole('heading', { name: /Coleta registrada/ }).waitFor();
+    await page.getByText('Bem-sucedida', { exact: true }).waitFor();
     assert.deepEqual(collectionBodies[0], collectionBodies[1]);
     assert.equal(calls.some((call) => call.path.includes('service-acceptance')), false);
     await scan('driver-receipt-mobile');

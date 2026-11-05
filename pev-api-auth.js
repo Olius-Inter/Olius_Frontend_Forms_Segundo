@@ -14,7 +14,7 @@ export function createPevApiAuth({ baseUrl = API_BASE_URL, fetchImpl = globalThi
   let accessToken = null;
   let account = null;
 
-  async function request(path, { method = 'GET', body, csrf, authenticated = false } = {}) {
+  async function request(path, { method = 'GET', body, csrf, authenticated = false, expectBody = true } = {}) {
     if (authenticated && !accessToken) throw new PevApiError('Entre novamente para consultar sua conta.', 'SESSION_REQUIRED');
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -47,7 +47,7 @@ export function createPevApiAuth({ baseUrl = API_BASE_URL, fetchImpl = globalThi
         }
         throw new PevApiError('O serviço não conseguiu concluir o acesso. Tente novamente mais tarde.', 'SERVICE_UNAVAILABLE');
       }
-      if (response.status === 204) return null;
+      if (response.status === 204 || !expectBody) return null;
       try { return await response.json(); }
       catch { throw new PevApiError('A API retornou uma resposta inválida. O acesso não foi liberado.', 'INVALID_RESPONSE'); }
     } finally { clearTimeout(timer); }
@@ -62,7 +62,7 @@ export function createPevApiAuth({ baseUrl = API_BASE_URL, fetchImpl = globalThi
   async function logout() {
     try {
       const csrf = await getCsrf();
-      await request('/api/v1/auth/web/logout', { method: 'POST', csrf });
+      await request('/api/v1/auth/web/logout', { method: 'POST', csrf, expectBody: false });
     } finally { accessToken = null; account = null; }
   }
 

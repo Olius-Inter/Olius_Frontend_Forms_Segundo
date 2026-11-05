@@ -105,3 +105,15 @@ test('confirmação do motorista tem prazo e não repete automaticamente um envi
   await assert.rejects(() => api.confirmCollection({ requestId: id, payload }), /incerto/);
   assert.equal(calls, 1);
 });
+
+test('resultado da coleta segue os valores definidos pelo Swagger', async () => {
+  const payload = { access, collectedVolumeLiters: 5, presentedVolumeLiters: 5, oilCondition: 'ACCEPTABLE',
+    hasCompromisingOccurrence: false, failureReasonCodes: [], observation: null };
+  for (const result of ['SUCCESSFUL', 'UNSUCCESSFUL', 'SUCCESS']) {
+    const api = createDriverApi({ fetchImpl: async () => reply({ collection: { id, requestId: id,
+      collectedVolumeLiters: 5, collectionDate: '2026-01-01T12:00:00Z', result } }) });
+    const confirmation = api.confirmCollection({ requestId: id, payload });
+    if (result === 'SUCCESS') await assert.rejects(() => confirmation, /comprovante completo/);
+    else assert.equal((await confirmation).collection.result, result);
+  }
+});
