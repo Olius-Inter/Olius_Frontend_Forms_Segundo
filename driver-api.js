@@ -67,7 +67,8 @@ export function createDriverApi({ baseUrl = API_BASE_URL, fetchImpl = globalThis
       try {
         const result = await collection.confirmCollection({ ...input, signal: controller.signal });
         if (Number(result.collection.collectedVolumeLiters) !== input.payload.collectedVolumeLiters ||
-            !Number.isFinite(Date.parse(result.collection.collectionDate))) {
+            !Number.isFinite(Date.parse(result.collection.collectionDate)) ||
+            !['SUCCESSFUL', 'UNSUCCESSFUL'].includes(result.collection.result)) {
           throw new Error('A API não devolveu o comprovante completo. Preserve os mesmos dados para verificar o resultado.');
         }
         return result;

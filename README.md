@@ -6,6 +6,8 @@ A escolha é feita pelo tipo de operação, não apenas pelo tipo de participant
 
 ## Estado desta versão
 
+Endpoints e contratos revisados em 05/11/2026 contra o [Swagger publicado](https://tvkgo0evuj.execute-api.us-east-1.amazonaws.com/swagger-ui/index.html), usando `/v3/api-docs`. Os dez caminhos usados pelo Forms permanecem compatíveis. O logout aceita sucesso sem corpo, incluindo 200 e 204; o comprovante de motorista usa os resultados `SUCCESSFUL` e `UNSUCCESSFUL`, exibidos como Bem-sucedida e Sem sucesso. CSRF e a rota pública responderam 200, a consulta anônima de perfil/PEV respondeu 401 e a pré-verificação CORS do Render respondeu 200. Login e gravação com conta real continuam dependendo de dados de teste válidos.
+
 Endereço público do Forms: https://olius-frontend-forms-segundo.onrender.com. Entrada do modo API: https://olius-frontend-forms-segundo.onrender.com/?modo=api.
 
 Links com `qrToken` real ou `modo=api` abrem a integração com a API. Estão conectados o login e a validação de PEV, a identificação do cidadão e o registro de entrega B2C; no motorista, contexto, paginação, chegada explícita, atualização do aceite e confirmação da coleta. Só a resposta do servidor libera um comprovante real. Pontos, ranking e saldo são responsabilidade das rotinas da API, sem cálculo ou atualização local pelo Forms.
